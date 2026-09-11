@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WHO CVD Risk Chart — North Africa &amp; Middle East (Egypt)</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --ink: #1a1d21; --muted: #5b6570;
+    --line: #e2e6ea; --brand: #0b6b5b; --brand-ink: #ffffff;
+    --field: #ffffff; --chip: #eef1f4;
+    --warnbg: #fff4e5; --warnink: #8a5300; --warnline: #f0d9b5;
+    --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.04);
+    --radius: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1216; --panel: #171b21; --ink: #e8ebee; --muted: #9aa4ae;
+      --line: #262c34; --brand: #2bb39a; --brand-ink: #06231d;
+      --field: #10141a; --chip: #202730;
+      --warnbg: #2a2113; --warnink: #f0c674; --warnline: #4a3a1a;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 24px rgba(0,0,0,.35);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 26px 18px 60px; }
+  h1 { font-size: 20px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .sub { color: var(--muted); font-size: 13.5px; margin: 0 0 18px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 18px; }
+  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+    margin: 0 0 12px; font-weight: 700; }
+  .row { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+  @media (max-width: 520px) { .fields { grid-template-columns: 1fr; } }
+  .field { display: flex; flex-direction: column; gap: 3px; }
+  .field label { font-size: 12px; color: var(--muted); font-weight: 600; }
+  .field .in { display: flex; align-items: center; gap: 6px; }
+  input[type=number], select { width: 100%; background: var(--field); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: inherit; }
+  .unit { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  p.unit { white-space: normal; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .seg button { border: none; border-radius: 0; background: var(--field); padding: 7px 12px;
+    font-size: 13px; color: var(--muted); cursor: pointer; font-weight: 600; }
+  .seg button.sel { background: var(--brand); color: var(--brand-ink); }
+  .hide { display: none !important; }
+  .results { margin-top: 16px; }
+  .whocat { display: inline-block; padding: 4px 14px; border-radius: 999px; font-size: 13px;
+    font-weight: 700; color: #fff; }
+  .whobig { font-size: 44px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; }
+  .whocell { color: var(--muted); font-size: 12.5px; margin-top: 6px; }
+  .whoadvice { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: var(--chip);
+    border: 1px solid var(--line); font-size: 13px; }
+  .whoscale { display: flex; gap: 2px; margin-top: 14px; border-radius: 6px; overflow: hidden;
+    font-size: 10px; color: #fff; text-align: center; }
+  .whoscale div { flex: 1; padding: 4px 0; }
+  .panelmsg { border-radius: 10px; padding: 10px 12px; font-size: 13px; margin-top: 12px; }
+  .panelmsg.info { background: var(--chip); color: var(--muted); border: 1px solid var(--line); }
+  .panelmsg.warn { background: var(--warnbg); color: var(--warnink); border: 1px solid var(--warnline); }
+
+  /* ---- BMI calculator & pop-out modal ---- */
+  .bmi-hero { text-align: center; padding: 6px 0 2px; }
+  .bmi-value { font-size: 58px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; }
+  .bmi-scale { position: relative; margin-top: 20px; }
+  .bmi-bar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; }
+  .bmi-bar div { height: 100%; }
+  .bmi-marker { position: absolute; top: -6px; width: 4px; height: 26px; background: var(--ink);
+    border-radius: 2px; transform: translateX(-50%); transition: left .45s ease; left: 0; }
+  .bmi-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 6px; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: none;
+    align-items: center; justify-content: center; z-index: 50; padding: 18px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--panel); color: var(--ink); border-radius: 16px; max-width: 520px; width: 100%;
+    box-shadow: 0 12px 48px rgba(0,0,0,.35); animation: pop .22s ease; max-height: 90vh; overflow: auto; }
+  @keyframes pop { from { transform: scale(.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px;
+    border-bottom: 1px solid var(--line); }
+  .modal-head h3 { margin: 0; font-size: 15px; }
+  .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--muted);
+    line-height: 1; padding: 2px 8px; }
+  .modal-close:hover { color: var(--ink); }
+  .modal-body { padding: 18px; }
+  .modal-foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 18px 16px; flex-wrap: wrap; }
+  button { font: inherit; font-weight: 600; cursor: pointer; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--chip); color: var(--ink); padding: 8px 14px; }
+  button.primary { background: var(--brand); color: var(--brand-ink); border-color: transparent; }
+  .factrow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+  @media (max-width: 480px) { .factrow { grid-template-columns: 1fr; } }
+  .metric-box { background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 8px; text-align: center; }
+  .metric-box .v { font-size: 17px; font-weight: 700; }
+  .metric-box .l { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em;
+    color: var(--muted); margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>WHO Cardiovascular Disease Risk Chart — North Africa &amp; Middle East (Egypt)</h1>
+
+  <div class="card" style="margin-top:14px;">
+    <p class="unit" style="margin:-2px 0 14px;">Official 2019 WHO CVD risk charts for this region. Choose the
+      laboratory-based chart (cholesterol + diabetes known — recommended for treatment decisions) or the
+      non-laboratory chart (BMI, when cholesterol/diabetes are unavailable). Risk is <b>10-year total CVD</b>.</p>
+
+    <div class="row" style="margin:0 0 12px;">
+      <span class="unit">Chart type:</span>
+      <span class="seg" id="whoTypeSeg">
+        <button data-t="lab" class="sel">Laboratory-based</button>
+        <button data-t="nonlab">Non-laboratory (BMI)</button>
+      </span>
+    </div>
+
+    <div class="fields">
+      <div class="field"><label>Age</label><div class="in">
+        <input type="number" id="w_age" placeholder="40–79"><span class="unit">years</span></div></div>
+      <div class="field"><label>Sex</label><div class="in">
+        <select id="w_sex"><option value="">—</option><option value="male">Male</option><option value="female">Female</option></select></div></div>
+      <div class="field"><label>Systolic BP</label><div class="in">
+        <input type="number" id="w_sbp" placeholder="—"><span class="unit">mmHg</span></div></div>
+      <div class="field"><label>Current smoker</label><div class="in">
+        <select id="w_smoker"><option value="">—</option><option value="true">Yes</option><option value="false">No</option></select></div></div>
+      <div class="field" id="w_dmField"><label>Diabetes</label><div class="in">
+        <select id="w_dm"><option value="">—</option><option value="true">Yes</option><option value="false">No</option></select></div></div>
+      <div class="field" id="w_cholField"><label>Total cholesterol</label><div class="in">
+        <input type="number" step="any" id="w_chol" placeholder="—"><span class="unit" id="w_cholUnit">mg/dL</span></div></div>
+      <div class="field hide" id="w_bmiField"><label>BMI</label><div class="in">
+        <input type="number" step="any" id="w_bmi" placeholder="—"><span class="unit">kg/m²</span></div></div>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <span class="unit">Chol units:</span>
+      <span class="seg" id="whoUnitSeg">
+        <button data-u="mg/dL" class="sel">mg/dL</button>
+        <button data-u="mmol/L">mmol/L</button>
+      </span>
+    </div>
+
+    <div id="whoResult" class="results"></div>
+
+    <div class="whoscale">
+      <div style="background:#7ac943">&lt;5%</div>
+      <div style="background:#e8d44d;color:#333">5–10%</div>
+      <div style="background:#f5a142">10–20%</div>
+      <div style="background:#e04b3a">20–30%</div>
+      <div style="background:#8e1f2f">≥30%</div>
+    </div>
+
+    <p class="unit" style="margin-top:12px;"><b>Source:</b> WHO cardiovascular disease risk charts (2019 update),
+      North Africa and Middle East region — Afghanistan, Algeria, Bahrain, Egypt, Iran, Iraq, Jordan, Kuwait,
+      Lebanon, Libya, Morocco, Oman, occupied Palestinian territory, Qatar, Saudi Arabia, Sudan, Syrian Arab
+      Republic, Tunisia, Turkey, United Arab Emirates, Yemen. Management advice per WHO HEARTS risk-based CVD
+      management guidance.</p>
+  </div>
+
+  <!-- ================= BMI calculator ================= -->
+  <div class="card" style="margin-top:16px;">
+    <h2>BMI Calculator</h2>
+    <p class="unit" style="margin:-6px 0 14px;">Body Mass Index — a quick screening measure of weight relative
+      to height. Enter your measurements and press <b>Calculate</b> for a pop-up with your result and healthy
+      weight range. You can send the result straight to the non-laboratory chart above.</p>
+
+    <div class="row" style="margin:0 0 14px;">
+      <span class="unit">Units:</span>
+      <span class="seg" id="bmiUnitSeg">
+        <button data-u="metric" class="sel">Metric (kg · cm)</button>
+        <button data-u="imperial">Imperial (lb · ft/in)</button>
+      </span>
+    </div>
+
+    <div class="fields" id="bmiMetricFields">
+      <div class="field"><label>Height</label><div class="in">
+        <input type="number" step="any" id="bmi_cm" placeholder="e.g. 170"><span class="unit">cm</span></div></div>
+      <div class="field"><label>Weight</label><div class="in">
+        <input type="number" step="any" id="bmi_kg" placeholder="e.g. 70"><span class="unit">kg</span></div></div>
+    </div>
+    <div class="fields hide" id="bmiImperialFields">
+      <div class="field"><label>Height</label><div class="in">
+        <input type="number" step="1" id="bmi_ft" placeholder="5" style="max-width:80px;"><span class="unit">ft</span>
+        <input type="number" step="any" id="bmi_in" placeholder="7" style="max-width:80px;"><span class="unit">in</span></div></div>
+      <div class="field"><label>Weight</label><div class="in">
+        <input type="number" step="any" id="bmi_lb" placeholder="e.g. 155"><span class="unit">lb</span></div></div>
+    </div>
+
+    <div class="row">
+      <button class="primary" id="bmiCalcBtn">Calculate BMI</button>
+      <button id="bmiClearBtn">Clear</button>
+      <span class="unit" id="bmiQuick"></span>
+    </div>
+
+    <div class="bmi-scale">
+      <div class="bmi-bar">
+        <div style="width:15.6%;background:#6ea8ff" title="Underweight &lt;18.5"></div>
+        <div style="width:23.4%;background:#7ac943" title="Normal 18.5–24.9"></div>
+        <div style="width:23.4%;background:#e8d44d" title="Overweight 25–29.9"></div>
+        <div style="width:23.4%;background:#f5a142" title="Obese class I 30–34.9"></div>
+        <div style="width:7%;background:#e04b3a" title="Obese class II 35–39.9"></div>
+        <div style="flex:1;background:#8e1f2f" title="Obese class III ≥40"></div>
+      </div>
+      <div class="bmi-marker" id="bmiMarker"></div>
+      <div class="bmi-labels"><span>14</span><span>18.5</span><span>25</span><span>30</span><span>35</span><span>40+</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= BMI result pop-out ================= -->
+<div class="modal-overlay" id="bmiModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="bmiModalTitle">
+    <div class="modal-head">
+      <h3 id="bmiModalTitle">Your BMI Result</h3>
+      <button class="modal-close" id="bmiModalClose" title="Close">×</button>
+    </div>
+    <div class="modal-body" id="bmiModalBody"></div>
+    <div class="modal-foot">
+      <button id="bmiSendWho">Use this BMI in the chart above</button>
+      <button class="primary" id="bmiModalOk">Done</button>
+    </div>
+  </div>
+</div>
+
+<script src="who-charts.js?v=1"></script>
+<script>
+(function () {
+  "use strict";
+  var W = window.WHO_CHART_API;
+  var state = { type: "lab", unit: "mg/dL" };
+
+  document.getElementById("whoTypeSeg").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-t]"); if (!b) return;
+    state.type = b.getAttribute("data-t");
+    [].forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("sel", x === b); });
+    document.getElementById("w_dmField").classList.toggle("hide", state.type === "nonlab");
+    document.getElementById("w_cholField").classList.toggle("hide", state.type === "nonlab");
+    document.getElementById("w_bmiField").classList.toggle("hide", state.type !== "nonlab");
+    computeWho();
+  });
+
+  document.getElementById("whoUnitSeg").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-u]"); if (!b) return;
+    state.unit = b.getAttribute("data-u");
+    [].forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("sel", x === b); });
+    document.getElementById("w_cholUnit").textContent = state.unit;
+    computeWho();
+  });
+
+  ["w_age","w_sbp","w_chol","w_bmi"].forEach(function (id) {
+    document.getElementById(id).addEventListener("input", computeWho);
+  });
+  ["w_sex","w_smoker","w_dm"].forEach(function (id) {
+    document.getElementById(id).addEventListener("change", computeWho);
+  });
+
+  function escW(s) { return String(s).replace(/[&<>]/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }); }
+
+  function computeWho() {
+    var box = document.getElementById("whoResult");
+    var g = function (id) { return document.getElementById(id).value; };
+    var inp = {
+      mode: state.type,
+      age: parseFloat(g("w_age")), sex: g("w_sex"), sbp: parseFloat(g("w_sbp")),
+      smoker: g("w_smoker") === "" ? null : g("w_smoker") === "true",
+      dm: g("w_dm") === "" ? null : g("w_dm") === "true",
+      total_c: parseFloat(g("w_chol")), chol_unit: state.unit,
+      bmi: parseFloat(g("w_bmi")),
+    };
+    var missing = [];
+    if (isNaN(inp.age)) missing.push("age");
+    if (!inp.sex) missing.push("sex");
+    if (isNaN(inp.sbp)) missing.push("systolic BP");
+    if (inp.smoker === null) missing.push("smoking status");
+    if (state.type === "lab") {
+      if (inp.dm === null) missing.push("diabetes status");
+      if (isNaN(inp.total_c)) missing.push("total cholesterol");
+    } else if (isNaN(inp.bmi)) missing.push("BMI");
+
+    if (missing.length) {
+      box.innerHTML = '<div class="panelmsg info">Enter the remaining value' + (missing.length > 1 ? "s" : "") +
+        ': <b>' + missing.join(", ") + '</b>.</div>';
+      return;
+    }
+    var r = W.lookup(inp);
+    if (r.error) { box.innerHTML = '<div class="panelmsg warn">' + escW(r.error) + '</div>'; return; }
+    var cat = W.category(r.risk);
+    var chartName = state.type === "lab"
+      ? (inp.dm ? "laboratory-based, people with diabetes" : "laboratory-based, people without diabetes")
+      : "non-laboratory-based";
+    box.innerHTML =
+      '<div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap;">' +
+        '<div><div class="whobig">' + r.risk + '%</div>' +
+        '<div class="unit">10-year total CVD risk</div></div>' +
+        '<span class="whocat" style="background:' + cat.color + '">' + cat.label + '</span>' +
+      '</div>' +
+      '<div class="whocell">Chart cell: age ' + r.age_band + ' · SBP ' + r.sbp_band + ' · ' +
+        (state.type === "lab" ? 'cholesterol ' : 'BMI ') + r.value_band +
+        ' · ' + escW(chartName) + '</div>' +
+      '<div class="whoadvice">' + escW(cat.advice) + '</div>';
+  }
+
+  // ================= BMI calculator =================
+  var bmiState = { unit: "metric" };
+
+  document.getElementById("bmiUnitSeg").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-u]"); if (!b) return;
+    bmiState.unit = b.getAttribute("data-u");
+    [].forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("sel", x === b); });
+    document.getElementById("bmiMetricFields").classList.toggle("hide", bmiState.unit !== "metric");
+    document.getElementById("bmiImperialFields").classList.toggle("hide", bmiState.unit !== "imperial");
+  });
+
+  function readBmiInputs() {
+    var kg, m;
+    if (bmiState.unit === "metric") {
+      var cm = parseFloat(document.getElementById("bmi_cm").value);
+      kg = parseFloat(document.getElementById("bmi_kg").value);
+      if (!(cm > 0) || !(kg > 0)) return null;
+      m = cm / 100;
+    } else {
+      var ft = parseFloat(document.getElementById("bmi_ft").value);
+      var inch = parseFloat(document.getElementById("bmi_in").value) || 0;
+      var lb = parseFloat(document.getElementById("bmi_lb").value);
+      if (!(ft > 0) || !(lb > 0)) return null;
+      var totalIn = ft * 12 + inch;
+      m = totalIn * 0.0254;
+      kg = lb * 0.45359237;
+    }
+    if (m < 0.8 || m > 2.6 || kg < 15 || kg > 500) return null; // plausibility guard
+    return { kg: kg, m: m, bmi: kg / (m * m) };
+  }
+
+  function bmiCategory(bmi) {
+    if (bmi < 18.5) return { key: "under", label: "Underweight", color: "#6ea8ff",
+      advice: "Below the healthy range. Being underweight can carry its own health risks — consider discussing nutrition and weight with a health professional." };
+    if (bmi < 25)   return { key: "normal", label: "Normal weight", color: "#7ac943",
+      advice: "Within the healthy range. Keep up regular physical activity and a balanced diet." };
+    if (bmi < 30)   return { key: "over", label: "Overweight", color: "#e8d44d",
+      advice: "Above the healthy range. Modest weight loss (5–10%) plus activity lowers blood pressure, cholesterol, and diabetes risk." };
+    if (bmi < 35)   return { key: "obese1", label: "Obesity — class I", color: "#f5a142",
+      advice: "In the obesity range. Structured lifestyle change is recommended; ask about further support and screening for related conditions." };
+    if (bmi < 40)   return { key: "obese2", label: "Obesity — class II", color: "#e04b3a",
+      advice: "Higher-risk obesity. Medical evaluation and a structured weight-management plan are recommended." };
+    return { key: "obese3", label: "Obesity — class III", color: "#8e1f2f",
+      advice: "Severe obesity. Specialist weight-management care is recommended; related conditions are likely without intervention." };
+  }
+
+  function bmiScalePct(bmi) {
+    var lo = 14, hi = 42;
+    return Math.max(0, Math.min(100, ((Math.min(bmi, hi) - lo) / (hi - lo)) * 100));
+  }
+
+  function fmt1(v) { return (Math.round(v * 10) / 10).toFixed(1); }
+
+  function showBmiModal(b) {
+    var cat = bmiCategory(b.bmi);
+    var loKg = 18.5 * b.m * b.m, hiKg = 24.9 * b.m * b.m;
+    var metricRange = fmt1(loKg) + "–" + fmt1(hiKg) + " kg";
+    var imperialRange = fmt1(loKg / 0.45359237) + "–" + fmt1(hiKg / 0.45359237) + " lb";
+    var whoBand = W.bmiBand(b.bmi);
+    var bandNames = { "<20": "under 20", "20-24": "20–24", "25-29": "25–29", "30-35": "30–35", ">=35": "35 or more" };
+
+    document.getElementById("bmiModalBody").innerHTML =
+      '<div class="bmi-hero">' +
+        '<div class="bmi-value" style="color:' + cat.color + '">' + fmt1(b.bmi) + '</div>' +
+        '<span class="whocat" style="background:' + cat.color + '; margin-top:8px;">' + escW(cat.label) + '</span>' +
+      '</div>' +
+      '<div class="bmi-scale"><div class="bmi-bar">' +
+        '<div style="width:15.6%;background:#6ea8ff"></div><div style="width:23.4%;background:#7ac943"></div>' +
+        '<div style="width:23.4%;background:#e8d44d"></div><div style="width:23.4%;background:#f5a142"></div>' +
+        '<div style="width:7%;background:#e04b3a"></div><div style="flex:1;background:#8e1f2f"></div></div>' +
+        '<div class="bmi-marker" style="left:' + bmiScalePct(b.bmi) + '%"></div>' +
+        '<div class="bmi-labels"><span>14</span><span>18.5</span><span>25</span><span>30</span><span>35</span><span>40+</span></div></div>' +
+      '<div class="factrow">' +
+        '<div class="metric-box"><div class="v">' + metricRange + '</div><div class="l">Healthy weight (metric)</div></div>' +
+        '<div class="metric-box"><div class="v">' + imperialRange + '</div><div class="l">Healthy weight (imperial)</div></div>' +
+      '</div>' +
+      '<div class="whoadvice">' + escW(cat.advice) + '</div>' +
+      '<p class="unit" style="margin-top:12px;">In the WHO risk chart this falls in the <b>' +
+        escW(bandNames[whoBand] || whoBand) + '</b> BMI band.</p>';
+
+    document.getElementById("bmiQuick").textContent = "BMI " + fmt1(b.bmi) + " — " + cat.label;
+    document.getElementById("bmiMarker").style.left = bmiScalePct(b.bmi) + "%";
+    document.getElementById("bmiModal").classList.add("open");
+  }
+
+  document.getElementById("bmiCalcBtn").addEventListener("click", function () {
+    var b = readBmiInputs();
+    if (!b) {
+      document.getElementById("bmiQuick").textContent = "Please enter a valid height and weight first.";
+      return;
+    }
+    showBmiModal(b);
+  });
+
+  document.getElementById("bmiClearBtn").addEventListener("click", function () {
+    ["bmi_cm","bmi_kg","bmi_ft","bmi_in","bmi_lb"].forEach(function (id) {
+      document.getElementById(id).value = "";
+    });
+    document.getElementById("bmiQuick").textContent = "";
+    document.getElementById("bmiMarker").style.left = "0%";
+  });
+
+  function closeBmiModal() { document.getElementById("bmiModal").classList.remove("open"); }
+  document.getElementById("bmiModalClose").addEventListener("click", closeBmiModal);
+  document.getElementById("bmiModalOk").addEventListener("click", closeBmiModal);
+  document.getElementById("bmiModal").addEventListener("click", function (e) {
+    if (e.target === this) closeBmiModal();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") closeBmiModal();
+  });
+
+  // Send the computed BMI to the non-laboratory chart above.
+  document.getElementById("bmiSendWho").addEventListener("click", function () {
+    var b = readBmiInputs(); if (!b) return;
+    var tbtn = document.querySelector("#whoTypeSeg button[data-t='nonlab']");
+    if (tbtn && !tbtn.classList.contains("sel")) tbtn.click();
+    document.getElementById("w_bmi").value = fmt1(b.bmi);
+    computeWho();
+    closeBmiModal();
+    document.getElementById("w_bmi").focus();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  // Live marker while typing (no pop-up)
+  ["bmi_cm","bmi_kg","bmi_ft","bmi_in","bmi_lb"].forEach(function (id) {
+    document.getElementById(id).addEventListener("input", function () {
+      var b = readBmiInputs();
+      if (b) {
+        document.getElementById("bmiMarker").style.left = bmiScalePct(b.bmi) + "%";
+        var cat = bmiCategory(b.bmi);
+        document.getElementById("bmiQuick").textContent = "BMI " + fmt1(b.bmi) + " — " + cat.label;
+      }
+    });
+  });
+
+  computeWho();
+})();
+</script>
+</body>
+</html>
